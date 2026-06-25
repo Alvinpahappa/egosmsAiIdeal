@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EgoSMS Message Coach — AI Prototype</title>
+    <style>
+        :root {
+            --blue: #1e6fd9;
+            --blue-dark: #1557b0;
+            --bg: #f4f6f9;
+            --sidebar: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --muted: #64748b;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .prototype-banner {
+            background: linear-gradient(90deg, #1e6fd9, #3b82f6);
+            color: white;
+            text-align: center;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 200px 1fr;
+            min-height: calc(100vh - 40px);
+        }
+
+        .sidebar-main {
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            padding: 1.25rem 0;
+        }
+
+        .logo {
+            padding: 0 1.25rem 1.5rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .logo span { color: #334155; font-weight: 400; }
+
+        .nav-item {
+            display: block;
+            padding: 0.75rem 1.25rem;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.92rem;
+        }
+
+        .nav-item.active {
+            background: #eff6ff;
+            color: var(--blue);
+            border-right: 3px solid var(--blue);
+            font-weight: 600;
+        }
+
+        .sidebar-sub {
+            background: #fafbfc;
+            border-right: 1px solid var(--border);
+            padding: 1.5rem 0;
+        }
+
+        .sub-title {
+            padding: 0 1rem 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .sub-item {
+            display: block;
+            padding: 0.6rem 1rem;
+            color: var(--muted);
+            font-size: 0.88rem;
+            text-decoration: none;
+        }
+
+        .sub-item.active {
+            color: var(--blue);
+            font-weight: 600;
+        }
+
+        .main {
+            padding: 1.5rem 2rem 2rem;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.35rem;
+            font-weight: 600;
+        }
+
+        .badge {
+            background: #dbeafe;
+            color: var(--blue);
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h2 {
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            color: #334155;
+        }
+
+        .sender-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .sender-card {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        .sender-card.selected {
+            border-color: var(--blue);
+            background: #f8fbff;
+        }
+
+        .sender-card strong { display: block; font-size: 0.9rem; }
+        .sender-card span { font-size: 0.8rem; color: var(--muted); }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #475569;
+        }
+
+        textarea, select {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-family: inherit;
+            font-size: 0.92rem;
+            resize: vertical;
+        }
+
+        textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(30, 111, 217, 0.12);
+        }
+
+        .message-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .tone-row {
+            display: grid;
+            grid-template-columns: 1fr 160px;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .btn-primary {
+            background: var(--blue);
+            color: white;
+        }
+
+        .btn-primary:hover { background: var(--blue-dark); }
+
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--blue);
+            border: 1px solid var(--blue);
+        }
+
+        .btn-secondary:hover { background: #eff6ff; }
+
+        .coach-panel {
+            display: none;
+            margin-top: 1rem;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%);
+            padding: 1.25rem;
+        }
+
+        .coach-panel.visible { display: block; }
+
+        .coach-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .metric .value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .metric .label {
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin-top: 0.2rem;
+        }
+
+        .summary {
+            font-size: 0.9rem;
+            color: #334155;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .issues {
+            margin-bottom: 1rem;
+        }
+
+        .issues h3, .rewrite h3 {
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .issues ul {
+            list-style: none;
+            display: grid;
+            gap: 0.4rem;
+        }
+
+        .issues li {
+            font-size: 0.88rem;
+            padding: 0.5rem 0.75rem;
+            background: #fff7ed;
+            border-left: 3px solid var(--warning);
+            border-radius: 4px;
+        }
+
+        .issues li.none {
+            background: #f0fdf4;
+            border-left-color: var(--success);
+        }
+
+        .rewrite-box {
+            background: white;
+            border: 1px dashed var(--blue);
+            border-radius: 8px;
+            padding: 0.85rem;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .error-box {
+            display: none;
+            margin-top: 1rem;
+            padding: 0.85rem 1rem;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            color: var(--danger);
+            font-size: 0.88rem;
+        }
+
+        .error-box.visible { display: block; }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 960px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar-main, .sidebar-sub { display: none; }
+            .metrics { grid-template-columns: repeat(2, 1fr); }
+            .tone-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="prototype-banner">
+        AI Innovation Challenge Prototype — EgoSMS Message Coach (tone, length &amp; clarity analyzer)
+    </div>
+
+    <div class="layout">
+        <aside class="sidebar-main">
+            <div class="logo">ego<span>sms</span></div>
+            <a class="nav-item" href="#">Dashboard</a>
+            <a class="nav-item" href="#">Payments Center</a>
+            <a class="nav-item active" href="#">Message Center</a>
+            <a class="nav-item" href="#">Contact Manager</a>
+            <a class="nav-item" href="#">Settings</a>
+        </aside>
+
+        <aside class="sidebar-sub">
+            <div class="sub-title">Message Center</div>
+            <a class="sub-item active" href="#">Single/Bulk SMS</a>
+            <a class="sub-item" href="#">Scheduled SMS</a>
+            <a class="sub-item" href="#">Message Templates</a>
+        </aside>
+
+        <main class="main">
+            <div class="page-header">
+                <h1>Single / Bulk SMS</h1>
+                <span class="badge">✨ AI Message Coach enabled</span>
+            </div>
+
+            <div class="card">
+                <h2>Sender ID</h2>
+                <div class="sender-grid">
+                    <div class="sender-card selected" onclick="selectSender(this)">
+                        <strong>Airtel-Uganda</strong>
+                        <span>SMSAlert</span>
+                    </div>
+                    <div class="sender-card" onclick="selectSender(this)">
+                        <strong>MTN-Uganda</strong>
+                        <span>UG-SMS</span>
+                    </div>
+                </div>
+
+                <label for="message">Message</label>
+                <textarea id="message" rows="5" placeholder="Type your message here..."
+                    oninput="updateCharCount()">Hey!!! URGENT get your FREE bonus today click here now!!!</textarea>
+                <div class="message-meta">
+                    <span id="charCount">0 Characters / 0 Message</span>
+                    <span>160 chars = 1 SMS segment</span>
+                </div>
+
+                <div class="tone-row">
+                    <div>
+                        <label for="tone">Preferred tone for AI rewrite</label>
+                        <select id="tone">
+                            <option value="professional">Professional</option>
+                            <option value="friendly">Friendly</option>
+                            <option value="urgent">Urgent (but compliant)</option>
+                            <option value="promotional">Promotional</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="maxSegments">Max SMS segments</label>
+                        <select id="maxSegments">
+                            <option value="1">1 segment (160)</option>
+                            <option value="2" selected>2 segments (320)</option>
+                            <option value="3">3 segments (480)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn-primary" id="analyzeBtn" onclick="analyzeMessage()">
+                        ✨ Analyze with AI
+                    </button>
+                    <button class="btn-secondary" onclick="clearCoach()">Clear analysis</button>
+                </div>
+
+                <div class="error-box" id="errorBox"></div>
+
+                <div class="coach-panel" id="coachPanel">
+                    <div class="coach-header">✨ AI Message Coach Results</div>
+                    <p class="summary" id="summary"></p>
+
+                    <div class="metrics">
+                        <div class="metric">
+                            <div class="value" id="metricTone">—</div>
+                            <div class="label">Detected tone</div>
+                        </div>
+                        <div class="metric">
+                            <div class="value" id="metricClarity">—</div>
+                            <div class="label">Clarity / 10</div>
+                        </div>
+                        <div class="metric">
+                            <div class="value" id="metricSegments">—</div>
+                            <div class="label">SMS segments</div>
+                        </div>
+                        <div class="metric">
+                            <div class="value" id="metricUnits">—</div>
+                            <div class="label">Billable units</div>
+                        </div>
+                    </div>
+
+                    <div class="issues">
+                        <h3>Issues &amp; recommendations</h3>
+                        <ul id="issuesList"></ul>
+                    </div>
+
+                    <div class="rewrite">
+                        <h3>Suggested rewrite</h3>
+                        <div class="rewrite-box" id="rewriteBox"></div>
+                        <div class="actions">
+                            <button class="btn-secondary" onclick="applyRewrite()">Apply to message</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let lastRewrite = '';
+
+        function selectSender(el) {
+            document.querySelectorAll('.sender-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('message').value;
+            const len = text.length;
+            const segments = len === 0 ? 0 : Math.ceil(len / 160);
+            document.getElementById('charCount').textContent =
+                `${len} Characters / ${segments} Message${segments !== 1 ? 's' : ''}`;
+        }
+
+        function showError(msg) {
+            const box = document.getElementById('errorBox');
+            box.textContent = msg;
+            box.classList.add('visible');
+        }
+
+        function hideError() {
+            document.getElementById('errorBox').classList.remove('visible');
+        }
+
+        function clearCoach() {
+            document.getElementById('coachPanel').classList.remove('visible');
+            hideError();
+        }
+
+        async function analyzeMessage() {
+            const btn = document.getElementById('analyzeBtn');
+            const message = document.getElementById('message').value.trim();
+
+            if (!message) {
+                showError('Please enter a message to analyze.');
+                return;
+            }
+
+            hideError();
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Analyzing...';
+
+            try {
+                const response = await fetch('/api/sms/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        tone: document.getElementById('tone').value,
+                        maxSegments: parseInt(document.getElementById('maxSegments').value, 10)
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.error || `Analysis failed (${response.status})`);
+                }
+
+                const data = await response.json();
+                renderResults(data);
+            } catch (err) {
+                showError(err.message || 'Could not reach the AI service. Is the server running?');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✨ Analyze with AI';
+            }
+        }
+
+        function renderResults(data) {
+            document.getElementById('coachPanel').classList.add('visible');
+            document.getElementById('summary').textContent = data.summary || 'Analysis complete.';
+            document.getElementById('metricTone').textContent = capitalize(data.detectedTone || '—');
+            document.getElementById('metricClarity').textContent = data.clarityScore ?? '—';
+            document.getElementById('metricSegments').textContent = data.segmentCount ?? '—';
+            document.getElementById('metricUnits').textContent = data.estimatedSmsUnits ?? '—';
+
+            const issuesList = document.getElementById('issuesList');
+            issuesList.innerHTML = '';
+
+            const issues = data.issues || [];
+            if (issues.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'none';
+                li.textContent = 'No major issues detected. Message looks good!';
+                issuesList.appendChild(li);
+            } else {
+                issues.forEach(issue => {
+                    const li = document.createElement('li');
+                    li.textContent = issue;
+                    issuesList.appendChild(li);
+                });
+            }
+
+            lastRewrite = data.suggestedRewrite || '';
+            document.getElementById('rewriteBox').textContent = lastRewrite;
+        }
+
+        function applyRewrite() {
+            if (!lastRewrite) return;
+            document.getElementById('message').value = lastRewrite;
+            updateCharCount();
+        }
+
+        function capitalize(str) {
+            if (!str) return '—';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        updateCharCount();
+    </script>
+</body>
+</html>
