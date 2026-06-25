@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EgoSMS Message Coach — AI Prototype</title>
+    <title>EgoSMS AI Insights — Prototype</title>
     <style>
         :root {
             --blue: #1e6fd9;
@@ -364,17 +364,137 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        .feature-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .feature-tab {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.65rem 1.1rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .feature-tab.active {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: white;
+        }
+
+        .feature-view { display: none; }
+        .feature-view.active { display: block; }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .chart-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .chart-card h3 {
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            margin-bottom: 0.85rem;
+        }
+
+        .bar-chart {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 3px;
+            align-items: end;
+            height: 160px;
+        }
+
+        .bar {
+            background: #bfdbfe;
+            border-radius: 3px 3px 0 0;
+            min-height: 4px;
+            position: relative;
+        }
+
+        .bar.best { background: var(--blue); }
+
+        .bar-labels {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 3px;
+            margin-top: 0.35rem;
+            font-size: 0.58rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .day-list {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .day-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.55rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.88rem;
+        }
+
+        .day-row.best {
+            border-color: var(--blue);
+            background: #eff6ff;
+            font-weight: 600;
+        }
+
+        .rec-box {
+            background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 1.1rem;
+            margin-top: 1rem;
+        }
+
+        .rec-highlight {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--blue);
+            margin: 0.35rem 0 0.75rem;
+        }
+
+        .data-note {
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
         @media (max-width: 960px) {
             .layout { grid-template-columns: 1fr; }
             .sidebar-main, .sidebar-sub { display: none; }
             .metrics { grid-template-columns: repeat(2, 1fr); }
             .tone-row { grid-template-columns: 1fr; }
+            .chart-grid { grid-template-columns: 1fr; }
+            .bar-labels { display: none; }
         }
     </style>
 </head>
 <body>
     <div class="prototype-banner">
-        AI Innovation Challenge Prototype — EgoSMS Message Coach (tone, length &amp; clarity analyzer)
+        AI Innovation Challenge Prototype — EgoSMS Message Coach + Best Send Time Advisor
     </div>
 
     <div class="layout">
@@ -389,17 +509,23 @@
 
         <aside class="sidebar-sub">
             <div class="sub-title">Message Center</div>
-            <a class="sub-item active" href="#">Single/Bulk SMS</a>
+            <a class="sub-item active" href="#" onclick="showView('coach'); return false;">Single/Bulk SMS</a>
+            <a class="sub-item" href="#" onclick="showView('sendtime'); return false;">Send Time Advisor</a>
             <a class="sub-item" href="#">Scheduled SMS</a>
-            <a class="sub-item" href="#">Message Templates</a>
         </aside>
 
         <main class="main">
             <div class="page-header">
-                <h1>Single / Bulk SMS</h1>
-                <span class="badge">✨ AI Message Coach enabled</span>
+                <h1 id="pageTitle">Single / Bulk SMS</h1>
+                <span class="badge" id="pageBadge">✨ AI Message Coach</span>
             </div>
 
+            <div class="feature-tabs">
+                <button class="feature-tab active" id="tabCoach" onclick="showView('coach')">Message Coach</button>
+                <button class="feature-tab" id="tabSendTime" onclick="showView('sendtime')">Best Send Time</button>
+            </div>
+
+            <div class="feature-view active" id="coachView">
             <div class="card">
                 <h2>Sender ID</h2>
                 <div class="sender-grid">
@@ -483,6 +609,76 @@
                         <div class="rewrite-box" id="rewriteBox"></div>
                         <div class="actions">
                             <button class="btn-secondary" onclick="applyRewrite()">Apply to message</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div class="feature-view" id="sendTimeView">
+                <div class="card">
+                    <h2>Best Send Time Recommendation</h2>
+                    <p class="data-note">
+                        Uses simulated EgoSMS campaign delivery data and shortened-link click tracking
+                        to recommend when messages are most likely to be opened and clicked.
+                    </p>
+
+                    <label for="campaignType">Campaign type</label>
+                    <select id="campaignType" style="max-width: 320px; margin-bottom: 1rem;">
+                        <option value="marketing">Marketing / Promotional</option>
+                        <option value="transactional">Transactional (OTP, payments)</option>
+                        <option value="reminder">Reminders &amp; alerts</option>
+                    </select>
+
+                    <div class="actions">
+                        <button class="btn-primary" id="sendTimeBtn" onclick="loadSendTimeRecommendation()">
+                            📊 Get best send time
+                        </button>
+                    </div>
+
+                    <div class="error-box" id="sendTimeError"></div>
+
+                    <div class="coach-panel" id="sendTimePanel">
+                        <div class="coach-header">📊 Recommended send window</div>
+                        <div class="rec-highlight" id="recWindow">—</div>
+                        <p class="summary" id="sendTimeInsight"></p>
+
+                        <div class="metrics">
+                            <div class="metric">
+                                <div class="value" id="recDay">—</div>
+                                <div class="label">Best day</div>
+                            </div>
+                            <div class="metric">
+                                <div class="value" id="recClickRate">—</div>
+                                <div class="label">Peak click rate</div>
+                            </div>
+                            <div class="metric">
+                                <div class="value" id="recUplift">—</div>
+                                <div class="label">Vs off-peak avg</div>
+                            </div>
+                            <div class="metric">
+                                <div class="value" id="recAlt">—</div>
+                                <div class="label">Alt. window</div>
+                            </div>
+                        </div>
+
+                        <p class="data-note" id="dataSummary"></p>
+
+                        <div class="chart-grid">
+                            <div class="chart-card">
+                                <h3>Click rate by hour (shortened-link clicks)</h3>
+                                <div class="bar-chart" id="hourChart"></div>
+                                <div class="bar-labels" id="hourLabels"></div>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Click rate by day</h3>
+                                <div class="day-list" id="dayChart"></div>
+                            </div>
+                        </div>
+
+                        <div class="issues">
+                            <h3>Scheduling tips</h3>
+                            <ul id="sendTimeTips"></ul>
                         </div>
                     </div>
                 </div>
@@ -598,6 +794,111 @@
         function capitalize(str) {
             if (!str) return '—';
             return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function showView(view) {
+            const isCoach = view === 'coach';
+            document.getElementById('coachView').classList.toggle('active', isCoach);
+            document.getElementById('sendTimeView').classList.toggle('active', !isCoach);
+            document.getElementById('tabCoach').classList.toggle('active', isCoach);
+            document.getElementById('tabSendTime').classList.toggle('active', !isCoach);
+            document.getElementById('pageTitle').textContent = isCoach
+                ? 'Single / Bulk SMS'
+                : 'Send Time Advisor';
+            document.getElementById('pageBadge').textContent = isCoach
+                ? '✨ AI Message Coach'
+                : '📊 Best Send Time';
+
+            document.querySelectorAll('.sidebar-sub .sub-item').forEach((item, index) => {
+                item.classList.toggle('active', isCoach ? index === 0 : index === 1);
+            });
+        }
+
+        function showSendTimeError(msg) {
+            const box = document.getElementById('sendTimeError');
+            box.textContent = msg;
+            box.classList.add('visible');
+        }
+
+        function hideSendTimeError() {
+            document.getElementById('sendTimeError').classList.remove('visible');
+        }
+
+        async function loadSendTimeRecommendation() {
+            const btn = document.getElementById('sendTimeBtn');
+            const type = document.getElementById('campaignType').value;
+
+            hideSendTimeError();
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Analyzing campaigns...';
+
+            try {
+                const response = await fetch(`/api/send-time/recommend?campaignType=${encodeURIComponent(type)}`);
+                if (!response.ok) {
+                    throw new Error(`Recommendation failed (${response.status})`);
+                }
+                const data = await response.json();
+                renderSendTimeResults(data);
+            } catch (err) {
+                showSendTimeError(err.message || 'Could not load send time recommendation.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📊 Get best send time';
+            }
+        }
+
+        function renderSendTimeResults(data) {
+            document.getElementById('sendTimePanel').classList.add('visible');
+            document.getElementById('recWindow').textContent =
+                `${data.recommendedDay} · ${data.recommendedWindow}`;
+            document.getElementById('sendTimeInsight').textContent = data.aiInsight || '';
+            document.getElementById('recDay').textContent = data.recommendedDay || '—';
+            document.getElementById('recClickRate').textContent =
+                data.bestClickRate != null ? `${data.bestClickRate}%` : '—';
+            document.getElementById('recUplift').textContent = data.upliftPercent || '—';
+            document.getElementById('recAlt').textContent = data.alternativeWindow || '—';
+            document.getElementById('dataSummary').textContent = data.dataSummary || '';
+
+            const maxRate = Math.max(...(data.hourlyBreakdown || []).map(h => h.clickRate), 1);
+            const bestHour = (data.hourlyBreakdown || []).reduce((best, h) =>
+                !best || h.clickRate > best.clickRate ? h : best, null);
+
+            const hourChart = document.getElementById('hourChart');
+            const hourLabels = document.getElementById('hourLabels');
+            hourChart.innerHTML = '';
+            hourLabels.innerHTML = '';
+
+            (data.hourlyBreakdown || []).forEach(h => {
+                const bar = document.createElement('div');
+                bar.className = 'bar' + (bestHour && h.hour === bestHour.hour ? ' best' : '');
+                bar.style.height = `${Math.max(8, (h.clickRate / maxRate) * 100)}%`;
+                bar.title = `${h.label}: ${h.clickRate}% click rate`;
+                hourChart.appendChild(bar);
+
+                const label = document.createElement('div');
+                label.textContent = h.hour % 6 === 0 ? h.hour : '';
+                hourLabels.appendChild(label);
+            });
+
+            const dayChart = document.getElementById('dayChart');
+            dayChart.innerHTML = '';
+            const bestDay = (data.dayBreakdown || []).reduce((best, d) =>
+                !best || d.clickRate > best.clickRate ? d : best, null);
+
+            (data.dayBreakdown || []).forEach(d => {
+                const row = document.createElement('div');
+                row.className = 'day-row' + (bestDay && d.day === bestDay.day ? ' best' : '');
+                row.innerHTML = `<span>${d.day}</span><span>${d.clickRate}% · ${d.campaigns} campaigns</span>`;
+                dayChart.appendChild(row);
+            });
+
+            const tipsList = document.getElementById('sendTimeTips');
+            tipsList.innerHTML = '';
+            (data.tips || []).forEach(tip => {
+                const li = document.createElement('li');
+                li.textContent = tip;
+                tipsList.appendChild(li);
+            });
         }
 
         updateCharCount();
